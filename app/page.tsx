@@ -6,14 +6,13 @@ import { cn } from "@/lib/utils"
 import { format } from "date-fns"
 
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useForm } from "react-hook-form"
+import { useFieldArray, useForm } from "react-hook-form"
 import * as z from "zod"
 
 import { Button } from "@/components/ui/button"
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -50,24 +49,36 @@ export default function Page() {
     ]
   );
 
-  const currentYear = new Date().getFullYear()
+  const currentYear = new Date().getFullYear();
 
-  // 1. Define your form.
-  const form = useForm<z.infer<typeof educationschema>>({
+  const defaultEduValue = {
+    school: "test",
+    major: "test",
+    degree: "test",
+    startdate: new Date(),
+    enddate: new Date(),
+    isCurrent: false,
+  }
+
+  const form = useForm({
     resolver: zodResolver(educationschema),
-    defaultValues: [{
-      school: "",
-      major: "",
-      degree: "",
-      startdate: new Date(),
-      enddate: new Date(),
-      isCurrent: false,
-    }],
-  })
- 
+    defaultValues: {
+      educations: [
+        defaultEduValue,
+      ]
+    }
+  });
+
+  const { control, handleSubmit } = form
+
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: "educations"
+  });
+
   // 2. Define a submit handler.
   function onSubmit(values: z.infer<typeof educationschema>) {
-    console.log("submited values: ", form.getValues());
+    console.log('[ values ] >', values)
     toast({
       title: "You submitted the following values:",
       description: (
@@ -76,34 +87,8 @@ export default function Page() {
         </p>
       ),
     })
-    console.log(values)
+    //console.log(values)
   }
-
-  // allow to add more education entries
-  function addEducation() {
-    setEducations([
-      ...educations, 
-      {
-        school: "",
-        major: "",
-        degree: "",
-        startdate: new Date(),
-        enddate: new Date(),
-        isCurrent: false,
-      },
-    ]);
-  };
-
-  // delete education entry, but keep at least one entry
-  function deleteEducation(index: number) {
-    if (educations.length > 1) {
-      const newEducations = [...educations];
-      newEducations.splice(index, 1);
-      setEducations(newEducations);
-    } else {
-      alert("at least one entry is required");
-    }
-  };
 
   const handleCurrentChange = (index: number, isCurrent: boolean) => {
     const updatedEducation = [...educations];
@@ -111,127 +96,61 @@ export default function Page() {
     setEducations(updatedEducation);
   };
 
-  console.log(form.formState.errors);
-
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 my-4">
-        {educations.map((edu, index) => (
-          <div key={index}>
-            <FormField
-              control={form.control}
-              name={`${index}.school`}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>school name</FormLabel>
-                  <FormControl>
-                    <Input 
-                      placeholder="University xxx" 
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name={`${index}.major`}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>major</FormLabel>
-                  <FormControl>
-                    <Input placeholder="ex: Design" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name={`${index}.degree`}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>diploma</FormLabel>
-                  <FormControl>
-                    <Input placeholder="ex: Master Design" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name={`${index}.startdate`}
-              render={({ field }) => (
-                <FormItem className="flex flex-col">
-                  <FormLabel>start day</FormLabel>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <FormControl>
-                        <Button
-                          variant={"outline"}
-                          className={cn(
-                            "w-[240px] pl-3 text-left font-normal",
-                            !field.value && "text-muted-foreground"
-                          )}
-                        >
-                          {field.value ? (
-                            format(field.value, "PPP")
-                          ) : (
-                            <span>select start day</span>
-                          )}
-                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                        </Button>
-                      </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={field.value}
-                        onSelect={field.onChange}
-                        disabled={(date) =>
-                          date > new Date() || date < new Date("1900-01-01")
-                        }
-                        captionLayout="dropdown-buttons"
-                        fromYear={1900}
-                        toYear={currentYear}
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* a checkbox isCurrent: if not selected then show enddate, else show nothing */}
-            <FormField
-              control={form.control}
-              name={`${index}.isCurrent`}
-              render={({ field }) => (
-                <FormItem className="flex flex-col">
-                  <FormLabel>is current?</FormLabel>
-                  <FormControl>
-                    <Checkbox 
-                      checked={field.value}
-                      onCheckedChange={(isCurrent) => handleCurrentChange(index, Boolean(isCurrent))}
-                    />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-
-            {!edu.isCurrent && (
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-8 my-4">
+        {
+          fields.map((item, index) => (
+            <div key={index}>
               <FormField
-                control={form.control}
-                name={`${index}.enddate`}
+                control={control}
+                name={`educations.${index}.school`}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>学校</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="Université xxx"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={control}
+                name={`educations.${index}.major`}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>专业</FormLabel>
+                    <FormControl>
+                      <Input placeholder="比如: Design" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={control}
+                name={`educations.${index}.degree`}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>学位</FormLabel>
+                    <FormControl>
+                      <Input placeholder="比如: Master Design" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={control}
+                name={`educations.${index}.startdate`}
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
-                    <FormLabel>end day</FormLabel>
+                    <FormLabel>开始时间</FormLabel>
                     <Popover>
                       <PopoverTrigger asChild>
                         <FormControl>
@@ -245,7 +164,7 @@ export default function Page() {
                             {field.value ? (
                               format(field.value, "PPP")
                             ) : (
-                              <span>select end day</span>
+                              <span>选择出生日期</span>
                             )}
                             <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                           </Button>
@@ -270,26 +189,81 @@ export default function Page() {
                   </FormItem>
                 )}
               />
-            )}
-
-            {index === educations.length - 1 && (
-              <div className="flex-wrap-gap-2 mb-2">
-                {index !== 0 && (
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    onClick={() => deleteEducation(index)}
-                  >
-                    Delete
-                  </Button>
+              <FormField
+                control={control}
+                name={`educations.${index}.isCurrent`}
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <FormLabel>是否目前就读?</FormLabel>
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                  </FormItem>
                 )}
-                <Button type="button" onClick={addEducation}>
-                  Add
+              />
+              {!item.isCurrent && (
+                <FormField
+                  control={form.control}
+                  name={`educations.${index}.enddate`}
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                      <FormLabel>结束日期</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant={"outline"}
+                              className={cn(
+                                "w-[240px] pl-3 text-left font-normal",
+                                !field.value && "text-muted-foreground"
+                              )}
+                            >
+                              {field.value ? (
+                                format(field.value, "PPP")
+                              ) : (
+                                <span>选择结束日期</span>
+                              )}
+                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={field.value}
+                            onSelect={field.onChange}
+                            disabled={(date) =>
+                              date > new Date() || date < new Date("1900-01-01")
+                            }
+                            captionLayout="dropdown-buttons"
+                            fromYear={1900}
+                            toYear={currentYear}
+                            initialFocus
+                          />
+                        </PopoverContent>
+                      </Popover>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
+              <div className="space-x-10 pt-4">
+                {
+                  index > 0 && <Button variant="secondary" type="button" onClick={() => remove(index)}>Delete</Button>
+                }
+                <Button
+                  type="button"
+                  onClick={() => append(defaultEduValue)}
+                >
+                  append
                 </Button>
               </div>
-            )}
-          </div>
-        ))}
+            </div>
+          ))
+        }
         <Button type="submit">Submit</Button>
       </form>
     </Form>

@@ -25,4 +25,6 @@ export const educationEntrySchema = z.object({
 
 export type educationEntry = z.infer<typeof educationEntrySchema>;
 
-export const educationschema = z.array(educationEntrySchema);
+export const educationschema = z.object({
+  educations: z.array(educationEntrySchema),
+});
