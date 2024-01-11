@@ -1,113 +1,297 @@
-import Image from 'next/image'
+"use client"
 
-export default function Home() {
-  return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Get started by editing&nbsp;
-          <code className="font-mono font-bold">app/page.tsx</code>
+import React, { useState } from "react"
+
+import { cn } from "@/lib/utils"
+import { format } from "date-fns"
+
+import { zodResolver } from "@hookform/resolvers/zod"
+import { useForm } from "react-hook-form"
+import * as z from "zod"
+
+import { Button } from "@/components/ui/button"
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
+import { Input } from "@/components/ui/input"
+import { useToast } from "@/components/ui/use-toast"
+
+import { Calendar } from "@/components/ui/calendar"
+import { Checkbox } from "@/components/ui/checkbox"
+
+import { CalendarIcon } from "lucide-react"
+import { educationschema, educationEntry } from "@/components/validators/education-schema"
+
+export default function Page() {
+  const { toast } = useToast();
+
+  // set education
+  const [educations, setEducations] = useState<educationEntry[]>(
+    [
+      {
+        school: "",
+        major: "",
+        degree: "",
+        startdate: new Date(),
+        enddate: new Date(),
+        isCurrent: false,
+      },
+    ]
+  );
+
+  const currentYear = new Date().getFullYear()
+
+  // 1. Define your form.
+  const form = useForm<z.infer<typeof educationschema>>({
+    resolver: zodResolver(educationschema),
+    defaultValues: [{
+      school: "",
+      major: "",
+      degree: "",
+      startdate: new Date(),
+      enddate: new Date(),
+      isCurrent: false,
+    }],
+  })
+ 
+  // 2. Define a submit handler.
+  function onSubmit(values: z.infer<typeof educationschema>) {
+    console.log("submited values: ", form.getValues());
+    toast({
+      title: "You submitted the following values:",
+      description: (
+        <p className="mt-2 w-[340px] rounded-md bg-slate-950 p-4">
+          <code className="text-white">{JSON.stringify(values, null, 2)}</code>
         </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:h-auto lg:w-auto lg:bg-none">
-          <a
-            className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{' '}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className="dark:invert"
-              width={100}
-              height={24}
-              priority
+      ),
+    })
+    console.log(values)
+  }
+
+  // allow to add more education entries
+  function addEducation() {
+    setEducations([
+      ...educations, 
+      {
+        school: "",
+        major: "",
+        degree: "",
+        startdate: new Date(),
+        enddate: new Date(),
+        isCurrent: false,
+      },
+    ]);
+  };
+
+  // delete education entry, but keep at least one entry
+  function deleteEducation(index: number) {
+    if (educations.length > 1) {
+      const newEducations = [...educations];
+      newEducations.splice(index, 1);
+      setEducations(newEducations);
+    } else {
+      alert("至少需要一个教育经历。");
+    }
+  };
+
+  const handleCurrentChange = (index: number, isCurrent: boolean) => {
+    const updatedEducation = [...educations];
+    updatedEducation[index].isCurrent = isCurrent;
+    setEducations(updatedEducation);
+  };
+
+  console.log(form.formState.errors);
+
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 my-4">
+        {educations.map((edu, index) => (
+          <div key={index}>
+            <FormField
+              control={form.control}
+              name={`${index}.school`}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>学校</FormLabel>
+                  <FormControl>
+                    <Input 
+                      placeholder="Université xxx" 
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </a>
-        </div>
-      </div>
 
-      <div className="relative flex place-items-center before:absolute before:h-[300px] before:w-[480px] before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-[240px] after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700 before:dark:opacity-10 after:dark:from-sky-900 after:dark:via-[#0141ff] after:dark:opacity-40 before:lg:h-[360px] z-[-1]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
+            <FormField
+              control={form.control}
+              name={`${index}.major`}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>专业</FormLabel>
+                  <FormControl>
+                    <Input placeholder="比如: Design" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-      <div className="mb-32 grid text-center lg:max-w-5xl lg:w-full lg:mb-0 lg:grid-cols-4 lg:text-left">
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Docs{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
+            <FormField
+              control={form.control}
+              name={`${index}.degree`}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>学位</FormLabel>
+                  <FormControl>
+                    <Input placeholder="比如: Master Design" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Learn{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Learn about Next.js in an interactive course with&nbsp;quizzes!
-          </p>
-        </a>
+            <FormField
+              control={form.control}
+              name={`${index}.startdate`}
+              render={({ field }) => (
+                <FormItem className="flex flex-col">
+                  <FormLabel>开始时间</FormLabel>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant={"outline"}
+                          className={cn(
+                            "w-[240px] pl-3 text-left font-normal",
+                            !field.value && "text-muted-foreground"
+                          )}
+                        >
+                          {field.value ? (
+                            format(field.value, "PPP")
+                          ) : (
+                            <span>选择出生日期</span>
+                          )}
+                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={field.value}
+                        onSelect={field.onChange}
+                        disabled={(date) =>
+                          date > new Date() || date < new Date("1900-01-01")
+                        }
+                        captionLayout="dropdown-buttons"
+                        fromYear={1900}
+                        toYear={currentYear}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Templates{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Explore starter templates for Next.js.
-          </p>
-        </a>
+            {/* a checkbox isCurrent: if not selected then show enddate, else show nothing */}
+            <FormField
+              control={form.control}
+              name={`${index}.isCurrent`}
+              render={({ field }) => (
+                <FormItem className="flex flex-col">
+                  <FormLabel>是否目前就读?</FormLabel>
+                  <FormControl>
+                    <Checkbox 
+                      checked={field.value}
+                      onCheckedChange={(isCurrent) => handleCurrentChange(index, Boolean(isCurrent))}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
 
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Deploy{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
+            {!edu.isCurrent && (
+              <FormField
+                control={form.control}
+                name={`${index}.enddate`}
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <FormLabel>结束日期</FormLabel>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant={"outline"}
+                            className={cn(
+                              "w-[240px] pl-3 text-left font-normal",
+                              !field.value && "text-muted-foreground"
+                            )}
+                          >
+                            {field.value ? (
+                              format(field.value, "PPP")
+                            ) : (
+                              <span>选择结束日期</span>
+                            )}
+                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={field.value}
+                          onSelect={field.onChange}
+                          disabled={(date) =>
+                            date > new Date() || date < new Date("1900-01-01")
+                          }
+                          captionLayout="dropdown-buttons"
+                          fromYear={1900}
+                          toYear={currentYear}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+
+            {index === educations.length - 1 && (
+              <div className="flex-wrap-gap-2 mb-2">
+                {index !== 0 && (
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={() => deleteEducation(index)}
+                  >
+                    Delete
+                  </Button>
+                )}
+                <Button type="button" onClick={addEducation}>
+                  Add
+                </Button>
+              </div>
+            )}
+          </div>
+        ))}
+        <Button type="submit">Submit</Button>
+      </form>
+    </Form>
   )
 }
