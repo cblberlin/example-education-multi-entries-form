@@ -101,7 +101,7 @@ export default function Page() {
       newEducations.splice(index, 1);
       setEducations(newEducations);
     } else {
-      alert("至少需要一个教育经历。");
+      alert("at least one entry is required");
     }
   };
 
@@ -123,10 +123,10 @@ export default function Page() {
               name={`${index}.school`}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>学校</FormLabel>
+                  <FormLabel>school name</FormLabel>
                   <FormControl>
                     <Input 
-                      placeholder="Université xxx" 
+                      placeholder="University xxx" 
                       {...field}
                     />
                   </FormControl>
@@ -140,9 +140,9 @@ export default function Page() {
               name={`${index}.major`}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>专业</FormLabel>
+                  <FormLabel>major</FormLabel>
                   <FormControl>
-                    <Input placeholder="比如: Design" {...field} />
+                    <Input placeholder="ex: Design" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -154,9 +154,9 @@ export default function Page() {
               name={`${index}.degree`}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>学位</FormLabel>
+                  <FormLabel>diploma</FormLabel>
                   <FormControl>
-                    <Input placeholder="比如: Master Design" {...field} />
+                    <Input placeholder="ex: Master Design" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -168,7 +168,7 @@ export default function Page() {
               name={`${index}.startdate`}
               render={({ field }) => (
                 <FormItem className="flex flex-col">
-                  <FormLabel>开始时间</FormLabel>
+                  <FormLabel>start day</FormLabel>
                   <Popover>
                     <PopoverTrigger asChild>
                       <FormControl>
@@ -182,7 +182,7 @@ export default function Page() {
                           {field.value ? (
                             format(field.value, "PPP")
                           ) : (
-                            <span>选择出生日期</span>
+                            <span>select start day</span>
                           )}
                           <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                         </Button>
@@ -214,7 +214,7 @@ export default function Page() {
               name={`${index}.isCurrent`}
               render={({ field }) => (
                 <FormItem className="flex flex-col">
-                  <FormLabel>是否目前就读?</FormLabel>
+                  <FormLabel>is current?</FormLabel>
                   <FormControl>
                     <Checkbox 
                       checked={field.value}
@@ -231,7 +231,7 @@ export default function Page() {
                 name={`${index}.enddate`}
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
-                    <FormLabel>结束日期</FormLabel>
+                    <FormLabel>end day</FormLabel>
                     <Popover>
                       <PopoverTrigger asChild>
                         <FormControl>
@@ -245,7 +245,7 @@ export default function Page() {
                             {field.value ? (
                               format(field.value, "PPP")
                             ) : (
-                              <span>选择结束日期</span>
+                              <span>select end day</span>
                             )}
                             <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                           </Button>
